@@ -1,5 +1,6 @@
 from __future__ import print_function
 import sys
+import argparse
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -7,14 +8,15 @@ import torch.nn.functional as F
 import torch.backends.cudnn as cudnn
 import random
 import os
-import argparse
+import torchvision.models as models
+from torchvision.models import resnet34, ResNet34_Weights
 import numpy as np
 from PreResNet import ResNet34  # 确保有这个文件的ResNet34定义
 from sklearn.mixture import GaussianMixture
 import dataloader_catsdogs_MIL as dataloader  # 修改为新的dataloader名称，适应猫狗数据集
 
 parser = argparse.ArgumentParser(description='PyTorch Cats vs Dogs Training')
-parser.add_argument('--batch_size', default=64, type=int, help='train batchsize')
+parser.add_argument('--batch_size', default=32, type=int, help='train batchsize')
 parser.add_argument('--lr', '--learning_rate', default=0.02, type=float, help='initial learning rate')
 parser.add_argument('--noise_mode', default='sym', help='sym or asym')
 parser.add_argument('--alpha', default=4, type=float, help='parameter for Beta')
@@ -202,7 +204,8 @@ class NegEntropy:
         return torch.mean(torch.sum(probs * torch.log(probs), dim=1))
 
 def create_model():
-    model = ResNet34(num_classes=args.num_class)
+    model = models.resnet34(weights=ResNet34_Weights.DEFAULT)  # 加载预训练模型
+    model.fc = nn.Linear(model.fc.in_features, 2)  # 将输出层改为2分类
     model = model.cuda()
     return model
 
